@@ -24,7 +24,7 @@ const defaultBooks: Book[] = [
   {
     id: "book-3",
     title: "Agentic AI in Financial Mathematics",
-    href: "https://fm-companion-one.vercel.app/",
+    href: "https://fm.sssia.org/",
     label: "Book",
   },
   {
