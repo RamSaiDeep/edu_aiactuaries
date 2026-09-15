@@ -112,7 +112,7 @@ export default async function ProgramsPage() {
             <p className="text-sm leading-relaxed">
               SSSIA Programs aligned to International Education Qualification Framework leading to
               <br />
-              Certificate Level Equivalent – 40 Credits
+              Foundation Level Equivalent – 40 Credits
               <br />
               Diploma Level Equivalent – 80 Credits
               <br />
