@@ -19,6 +19,29 @@ export const metadata = buildMetadata({
 // Next requires a literal here; it can't statically read an imported constant.
 export const revalidate = 300; // 5 minutes
 
+const partnerships = [
+  {
+    name: "Institute of Actuaries of India (IAI)",
+    description:
+      "Seminars, conferences, webinars, educational materials, climate-risk initiatives, and the Indian Actuaries Climate Index.",
+  },
+  {
+    name: "Institute and Faculty of Actuaries (IFoA, UK)",
+    description:
+      "Industry workshops on Agentic AI for Actuaries, actuarial summer programs, and outreach initiatives with universities and educational institutions.",
+  },
+  {
+    name: "Casualty Actuarial Society (CAS, USA)",
+    description:
+      "Agentic AI funded research projects, global actuarial case studies, and workshops at the CAS Teaching Summit.",
+  },
+  {
+    name: "ACTEX (USA)",
+    description:
+      "Actuarial book publications, development of educational materials, Agentic AI workshops, and Faculty Development Programs.",
+  },
+];
+
 export default async function AboutPage() {
   const organizations = await fetchQuery(api.organizations.listFeatured, {});
 
@@ -31,28 +54,10 @@ export default async function AboutPage() {
       </h1>
 
       <p className="mt-6 text-lg leading-relaxed text-foreground">
-        The Sri Sathya Sai Institute of Actuaries teaches actuarial science
-        alongside the data science and artificial intelligence the profession
-        now runs on, to students across India — and gives that education freely.
+        Sri Sathya Sai Institute of Actuaries (SSSIA) is a non-profit Institution involved in actuarial education, research
+        and professional-development initiative. It prepares emerging actuarial professionals through the integration of
+        actuarial science, data science, artificial intelligence, research and applied learning.
       </p>
-
-      <div className="mt-8 space-y-6 leading-relaxed text-muted-foreground">
-        <p>
-          Actuarial work has always been quantitative, but the tools have
-          changed faster than most curricula. Pricing, reserving, claims
-          analytics and fraud detection are increasingly done with machine
-          learning, and students entering the profession are expected to arrive
-          fluent in both the actuarial fundamentals and the computational
-          methods built on top of them. The Institute exists to close that gap.
-        </p>
-        <p>
-          Our programs run from foundations — financial mathematics,
-          probability, microeconomics, R and Excel — through to applied machine
-          learning and AI for insurance. They are delivered by experienced
-          faculty and practising actuaries, mostly online so students anywhere
-          in India can attend.
-        </p>
-      </div>
 
       <section className="mt-12 rounded-xl border border-gold/20 bg-linear-to-br from-gold/5 via-transparent to-transparent p-6">
         <h2 className="font-display text-xl tracking-tight">
@@ -70,32 +75,39 @@ export default async function AboutPage() {
         <h2 className="font-display text-2xl tracking-tight">
           Working with the profession
         </h2>
-        <p className="mt-3 leading-relaxed text-muted-foreground">
-          The Institute engages with actuarial bodies in India and abroad
-          through conferences, leadership meetings and academic partnerships.
-          The Institute and Faculty of Actuaries (IFoA), UK is the Knowledge
-          Partner for the 2026 summer course.
-        </p>
 
-        <ul className="mt-8 flex flex-wrap items-center gap-x-10 gap-y-6">
-          {organizations.map((org) =>
-            org.logoUrl ? (
-              <li key={org._id}>
-                <Image
-                  src={org.logoUrl}
-                  alt={org.logoAlt ?? org.name}
-                  width={140}
-                  height={44}
-                  className={
-                    org.invertInDark
-                      ? "h-10 w-28 object-contain opacity-70 dark:invert"
-                      : "h-10 w-28 object-contain opacity-70"
-                  }
-                />
-              </li>
-            ) : null,
-          )}
-        </ul>
+        <div className="mt-4 space-y-3">
+          {partnerships.map((partner) => (
+            <p key={partner.name} className="leading-relaxed text-muted-foreground">
+              <strong className="font-semibold text-foreground">
+                {partner.name}:
+              </strong>{" "}
+              {partner.description}
+            </p>
+          ))}
+        </div>
+
+        {organizations.length > 0 && (
+          <ul className="mt-8 flex flex-wrap items-center gap-x-10 gap-y-6">
+            {organizations.map((org) =>
+              org.logoUrl ? (
+                <li key={org._id}>
+                  <Image
+                    src={org.logoUrl}
+                    alt={org.logoAlt ?? org.name}
+                    width={140}
+                    height={44}
+                    className={
+                      org.invertInDark
+                        ? "h-10 w-28 object-contain opacity-70 dark:invert"
+                        : "h-10 w-28 object-contain opacity-70"
+                    }
+                  />
+                </li>
+              ) : null,
+            )}
+          </ul>
+        )}
       </section>
 
       <section className="mt-12">

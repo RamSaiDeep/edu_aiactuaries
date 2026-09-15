@@ -13,7 +13,7 @@ import { fetchQuery } from "@/lib/convex-server";
 export const metadata = buildMetadata({
   title: "Events",
   description:
-    "Upcoming and past events and workshops from the Sri Sathya Sai Institute of Actuaries.",
+    "Upcoming events and workshops from the Sri Sathya Sai Institute of Actuaries.",
   path: "/events",
 });
 
@@ -21,9 +21,8 @@ export const metadata = buildMetadata({
 export const revalidate = 300; // 5 minutes
 
 /**
- * Events and workshops, split by time: what a visitor can still attend leads,
- * the record of past sessions follows. Long-form offerings (programs,
- * certifications, internships) live on /programs; the two pages cross-link.
+ * Upcoming events and workshops that a visitor can still attend.
+ * Past events have moved to the News & Highlights tab (/news).
  */
 export default async function EventsPage() {
   const items = await fetchQuery(api.content.listEventsAndWorkshops, {});
@@ -39,7 +38,6 @@ export default async function EventsPage() {
   const upcoming = items
     .filter((item) => !isPast(item))
     .sort((a, b) => (a.startDate ?? Infinity) - (b.startDate ?? Infinity));
-  const past = items.filter(isPast);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
@@ -78,37 +76,34 @@ export default async function EventsPage() {
         )}
       </section>
 
-      {past.length > 0 ? (
-        <section aria-labelledby="past-heading" className="mb-16">
-          <h2
-            id="past-heading"
-            className="font-display text-2xl tracking-tight sm:text-3xl"
-          >
-            Past events
-          </h2>
-          <p className="mt-2 max-w-2xl leading-relaxed text-muted-foreground">
-            A record of what the Institute has delivered, most recent first.
+      <aside className="border-t border-border pt-10 grid gap-8 md:grid-cols-2">
+        <div>
+          <h3 className="font-display text-lg tracking-tight">Looking for past sessions?</h3>
+          <p className="mt-1 leading-relaxed text-muted-foreground">
+            A permanent record of past workshops, webinars, and event highlights
+            has moved to our News & Highlights section.
           </p>
+          <Button asChild variant="outline" className="mt-4 gap-2">
+            <Link href="/news?category=Past+Events">
+              View Past Events in News
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </div>
 
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {past.map((item, index) => (
-              <ContentCard key={item._id} item={item} delayMs={index * 80} />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <aside className="border-t border-border pt-10">
-        <p className="max-w-2xl leading-relaxed text-muted-foreground">
-          Looking for something longer-form? Programs, certifications, and
-          internships have their own home.
-        </p>
-        <Button asChild variant="outline" className="mt-4 gap-2">
-          <Link href="/programs">
-            Browse programs
-            <ArrowRight className="size-4" />
-          </Link>
-        </Button>
+        <div>
+          <h3 className="font-display text-lg tracking-tight">Longer-form offerings</h3>
+          <p className="mt-1 leading-relaxed text-muted-foreground">
+            Looking for structured learning? Multi-week programs, certifications,
+            and internships have their own dedicated home.
+          </p>
+          <Button asChild variant="outline" className="mt-4 gap-2">
+            <Link href="/programs">
+              Browse programs
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </div>
       </aside>
     </div>
   );

@@ -3,45 +3,124 @@
 import { useState } from "react";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import type { PublicContent } from "@/convex/content";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { contentHref, formatContentDate } from "@/lib/content";
 
+export function NewsClient({
+  newsItems: initialNews,
+  pastEvents: initialPastEvents,
+}: {
+  newsItems: PublicContent[];
+  pastEvents: PublicContent[];
+}) {
+  const liveNews = useQuery(api.content.listByTypeChronological, { type: "news" });
+  const livePastEvents = useQuery(api.content.listPastEvents, {});
 
-export function NewsClient({ items: initialItems }: { items: PublicContent[] }) {
-  const liveItems = useQuery(api.content.listByTypeChronological, { type: "news" });
-  const items = liveItems ?? initialItems;
+  const newsItems = liveNews ?? initialNews;
+  const pastEvents = livePastEvents ?? initialPastEvents;
 
-  const [activeCategory, setActiveCategory] = useState("All");
+  // Merge news and past events, ordered newest-first
+  const allItems = [...newsItems, ...pastEvents].sort((a, b) => {
+    const timeA = a.startDate ?? a.publishedAt ?? a._creationTime ?? 0;
+    const timeB = b.startDate ?? b.publishedAt ?? b._creationTime ?? 0;
+    return timeB - timeA;
+  });
 
-  const featuredStory = items.find((item) => item.featured);
-  const otherNews = featuredStory ? items.filter((item) => item !== featuredStory) : items;
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams?.get("category");
+
+  const [activeCategory, setActiveCategory] = useState<string>(() => {
+    if (categoryParam) {
+      if (
+        categoryParam.toLowerCase() === "past events" ||
+        categoryParam.toLowerCase() === "pastevents"
+      ) {
+        return "Past Events";
+      }
+      return categoryParam;
+    }
+    return "All";
+  });
+
+  const featuredStory = allItems.find((item) => item.featured);
+  const otherNews = featuredStory
+    ? allItems.filter((item) => item._id !== featuredStory._id)
+    : allItems;
 
   const getCategory = (item: PublicContent) => {
+    if (item.type === "event" || item.type === "workshop") {
+      return "Past Events";
+    }
     if (item.details?.kind === "news" && "category" in item.details) {
       return (item.details as any).category || "Update";
     }
     return "Update";
   };
 
+  const getCardCategoryBadge = (item: PublicContent) => {
+    if (item.type === "event") return "Past Event";
+    if (item.type === "workshop") return "Past Workshop";
+    if (item.details?.kind === "news" && "category" in item.details) {
+      return (item.details as any).category || "Update";
+    }
+    return "Update";
+  };
+
+  const rawCategories = Array.from(new Set(allItems.map(getCategory)));
+  const otherCategories = rawCategories
+    .filter((c) => c !== "All" && c !== "Past Events")
+    .sort((a, b) => a.localeCompare(b));
+
   const categories = [
     "All",
-    ...Array.from(new Set(items.map(getCategory))),
-  ].sort((a, b) => (a === "All" ? -1 : b === "All" ? 1 : a.localeCompare(b)));
+    ...(rawCategories.includes("Past Events") || pastEvents.length > 0
+      ? ["Past Events"]
+      : []),
+    ...otherCategories,
+  ];
 
   const filteredNews =
     activeCategory === "All"
       ? otherNews
-      : otherNews.filter((item) => getCategory(item) === activeCategory);
+      : activeCategory === "Past Events"
+        ? otherNews.filter(
+            (item) =>
+              item.type === "event" ||
+              item.type === "workshop" ||
+              getCategory(item) === "Past Events" ||
+              (item.details?.kind === "news" &&
+                "category" in item.details &&
+                (item.details as any).category === "Events"),
+          )
+        : otherNews.filter((item) => getCategory(item) === activeCategory);
 
   const getMetric = (item: PublicContent) => {
+    if (item.type === "event" || item.type === "workshop") {
+      const date = formatContentDate(item);
+      const loc = item.location;
+      if (date && loc) return `${date} · ${loc}`;
+      if (date) return date;
+      if (loc) return loc;
+      return "Past Session";
+    }
     if (item.details?.kind === "news" && "metric" in item.details) {
       return (item.details as any).metric;
     }
     return null;
   };
 
+  const getActionLabel = (item: PublicContent) => {
+    if (item.type === "event") return "View Event";
+    if (item.type === "workshop") return "View Workshop";
+    return "Read Story";
+  };
 
+  const getItemHref = (item: PublicContent) => {
+    return contentHref(item.type, item.slug);
+  };
 
   const getLinkedinUrl = (item: PublicContent) => {
     return item.linkedinUrl || undefined;
@@ -59,7 +138,7 @@ export function NewsClient({ items: initialItems }: { items: PublicContent[] }) 
             News & Highlights
           </h1>
           <p className="text-lg md:text-xl text-[#0A192F]/70 max-w-2xl font-light">
-            What we&apos;ve been building, teaching, publishing, and contributing to
+            What we&apos;ve been building, teaching, publishing, and delivering across
             the actuarial and AI community.
           </p>
         </div>
@@ -76,7 +155,7 @@ export function NewsClient({ items: initialItems }: { items: PublicContent[] }) 
               <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
                 <div className="flex-1">
                   <p className="text-xs font-bold tracking-widest text-[#0A192F]/60 mb-6 uppercase">
-                    Featured / {getCategory(featuredStory)}
+                    Featured / {getCardCategoryBadge(featuredStory)}
                   </p>
                   <h2 className="text-5xl md:text-7xl font-serif text-[#0A192F] tracking-tight leading-[0.95] mb-8 uppercase">
                     {featuredStory.title}
@@ -88,10 +167,10 @@ export function NewsClient({ items: initialItems }: { items: PublicContent[] }) 
 
                   <div className="flex flex-col sm:flex-row gap-6">
                     <Link
-                      href={`/news/${featuredStory.slug}`}
+                      href={getItemHref(featuredStory)}
                       className="inline-flex items-center gap-2 text-xs font-bold tracking-widest text-[#0A192F] hover:text-[#F26A21] transition-colors uppercase border-b border-[#0A192F]/30 pb-1 hover:border-[#F26A21] w-max"
                     >
-                      Read Full Story <ArrowRight className="w-4 h-4" />
+                      {getActionLabel(featuredStory)} <ArrowRight className="w-4 h-4" />
                     </Link>
                     {getLinkedinUrl(featuredStory) ? (
                       <a
@@ -156,7 +235,7 @@ export function NewsClient({ items: initialItems }: { items: PublicContent[] }) 
 
         {/* LATEST NEWS & FILTERING */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <h3 className="text-2xl font-serif text-[#0A192F]">Latest News</h3>
+          <h3 className="text-2xl font-serif text-[#0A192F]">Latest Updates</h3>
 
           <div className="flex flex-wrap gap-2 md:gap-4">
             {categories.map((category) => (
@@ -175,10 +254,10 @@ export function NewsClient({ items: initialItems }: { items: PublicContent[] }) 
           </div>
         </div>
 
-        {/* NEWS GRID */}
+        {/* NEWS & PAST EVENTS GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {filteredNews.map((item, idx) => (
-            <Link href={`/news/${item.slug}`} key={item._id} className="group block">
+            <Link href={getItemHref(item)} key={item._id} className="group block">
               <article className="border border-[#0A192F]/15 bg-white p-6 md:p-8 flex flex-col justify-between hover:border-[#0A192F]/40 transition-all duration-300 relative overflow-hidden min-h-[320px] h-full">
                 {/* Subtle hover background effect */}
                 <div className="absolute inset-0 bg-[#F26A21]/5 transform translate-y-full transition-transform duration-500 ease-out group-hover:translate-y-0" />
@@ -189,7 +268,7 @@ export function NewsClient({ items: initialItems }: { items: PublicContent[] }) 
                       {(idx + 1).toString().padStart(2, "0")}
                     </span>
                     <span className="text-xs font-bold tracking-widest text-[#F26A21] uppercase text-right">
-                      {getCategory(item)}
+                      {getCardCategoryBadge(item)}
                     </span>
                   </div>
 
@@ -210,7 +289,7 @@ export function NewsClient({ items: initialItems }: { items: PublicContent[] }) 
 
                 <div className="relative z-10 mt-8 pt-4 border-t border-[#0A192F]/10 flex items-center justify-between">
                   <span className="text-xs font-bold tracking-widest text-[#0A192F] uppercase flex items-center gap-2 group-hover:gap-3 transition-all">
-                    Read Story <ArrowRight className="w-3 h-3 text-[#F26A21]" />
+                    {getActionLabel(item)} <ArrowRight className="w-3 h-3 text-[#F26A21]" />
                   </span>
                 </div>
               </article>
@@ -221,7 +300,9 @@ export function NewsClient({ items: initialItems }: { items: PublicContent[] }) 
         {filteredNews.length === 0 && (
           <div className="py-24 text-center border border-[#0A192F]/10 bg-white">
             <p className="text-[#0A192F]/50 font-serif text-xl">
-              No articles found in this category.
+              {activeCategory === "Past Events"
+                ? "No past events found."
+                : "No articles found in this category."}
             </p>
           </div>
         )}

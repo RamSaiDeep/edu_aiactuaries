@@ -120,6 +120,52 @@ export const listEventsAndWorkshops = query({
   },
 });
 
+/** Past events and workshops for the news & highlights surface. */
+export const listPastEvents = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 100;
+    const now = Date.now();
+
+    const [events, workshops] = await Promise.all([
+      ctx.db
+        .query("content")
+        .withIndex("by_type_status_startDate", (q) =>
+          q.eq("type", "event").eq("status", "published"),
+        )
+        .order("desc")
+        .take(limit),
+      ctx.db
+        .query("content")
+        .withIndex("by_type_status_startDate", (q) =>
+          q.eq("type", "workshop").eq("status", "published"),
+        )
+        .order("desc")
+        .take(limit),
+    ]);
+
+    const isPast = (doc: ContentDoc) => {
+      if (
+        doc.details &&
+        "lifecycle" in doc.details &&
+        doc.details.lifecycle === "completed"
+      ) {
+        return true;
+      }
+      const end = doc.endDate ?? doc.startDate;
+      return end !== undefined && end < now;
+    };
+
+    const past = [...events, ...workshops]
+      .filter(isPast)
+      .sort((a, b) => (b.startDate ?? -Infinity) - (a.startDate ?? -Infinity))
+      .slice(0, limit);
+
+    return Promise.all(past.map((doc) => withImageUrls(ctx, doc)));
+  },
+});
+
+
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
