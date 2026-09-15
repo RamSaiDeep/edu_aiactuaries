@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight, FileText } from "lucide-react";
 
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -104,7 +104,38 @@ export default async function ProgramsPage() {
       <SectionHeader
         as="h1"
         title="Programs"
-        description="Long-form learning that blends actuarial science and AI — structured programs, credential-bearing certifications, and hands-on internships."
+        description={
+          <div className="space-y-3">
+            <p>
+              Long-form learning that blends actuarial science and AI — structured programs, credential-bearing certifications, and hands-on internships.
+            </p>
+            <p className="text-sm leading-relaxed">
+              SSSIA Programs aligned to International Education Qualification Framework leading to
+              <br />
+              Certificate Level Equivalent – 40 Credits
+              <br />
+              Diploma Level Equivalent – 80 Credits
+              <br />
+              Graduation Level Equivalent – 120 Credits
+            </p>
+            <p className="text-sm font-medium text-foreground/85">
+              All Programs Aligned to the Casualty Actuarial Society Associateship (ACAS) Requirements.
+            </p>
+            <p className="text-sm">
+              {/* Static file in public/; the space in the filename must be URL-encoded. */}
+              <a
+                href="/SSSIA-Detailed-Syllabus-Ver%201.0.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-1.5 font-medium text-foreground underline underline-offset-4 decoration-gold/60 hover:text-gold hover:decoration-gold"
+              >
+                <FileText className="size-4" aria-hidden="true" />
+                View detailed syllabus (PDF)
+                <ArrowUpRight className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+              </a>
+            </p>
+          </div>
+        }
       />
 
       <OfferingSection

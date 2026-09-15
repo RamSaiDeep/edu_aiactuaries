@@ -71,7 +71,7 @@ export function HomeClient({ news: initialNews, settings: initialSettings, carou
       subtitle: ".hero-subtitle",
       buttons: ".hero-btn",
       booksLabel: ".hero-books-label",
-      books: ".hero-book, .hero-book-mobile-titles",
+      books: ".hero-book",
     });
 
     // 2. Statistics Counters

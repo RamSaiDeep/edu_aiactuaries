@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 type SectionHeaderProps = {
   title: string;
-  description: string;
+  description: React.ReactNode;
   as?: "h1" | "h2";
   className?: string;
   titleClassName?: string;
@@ -29,9 +29,9 @@ export function SectionHeader({
       >
         {title}
       </HeadingTag>
-      <p className={cn("mt-3 text-muted-foreground", descriptionClassName)}>
+      <div className={cn("mt-3 text-muted-foreground", descriptionClassName)}>
         {description}
-      </p>
+      </div>
     </div>
   );
 }
